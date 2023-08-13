@@ -5,34 +5,36 @@ const io = require("socket.io")(httpServer,{
     cors:true,
     origin:["*"]
 });
-const nameDictionary = {};
 
-const addName = (userData) =>{
-  nameDictionary[userData.id] = userData.name+"";
-  console.log(nameDictionary);
-}
-
-const deleteName = (id) =>{
-    delete nameDictionary[id];
-}
-
-
+const usersData = {};
 
 
 io.on("connection",(socket)=>{
     
-
+    
     socket.on('disconnect', () => {
-        socket.broadcast.emit("joinGame",nameDictionary[socket.id]+" user disconnected from the server");
-        deleteName(socket.id);
+        if(usersData[socket.id]){
+        socket.broadcast.emit("leaveGame",{
+            userName:usersData[socket.id].nickname,
+            gameId:usersData[socket.id].gameId
+        });
+        console.log("Önce");
+        console.log(usersData);
+        delete usersData[socket.id];
+        console.log("Sonra");
+        console.log(usersData);
+    }
       });
 
     socket.on("joinGame",data=>{
-        addName({id:socket.id,name:data.name});
-        socket.broadcast.emit("joinGame",nameDictionary[socket.id]+" user joined to server");
-        
+        usersData[socket.id] = { nickname: data.nickname,gameId:data.gameId };
+        socket.broadcast.emit("joinGame",{
+            userName:data.nickname+"",
+            gameId:data.gameId
+        });
     });
 })
+
 
 
 
