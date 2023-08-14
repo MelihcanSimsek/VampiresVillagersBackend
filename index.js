@@ -7,7 +7,7 @@ const io = require("socket.io")(httpServer,{
 });
 
 const usersData = {};
-const chatMessage = {};
+const chatMessage = [];
 
 function getNicknamesByGameId(gameId) {
     const nicknames = [];
@@ -24,15 +24,14 @@ function getNicknamesByGameId(gameId) {
   function getChatMessageByGameId(gameId) {
     const messages = [];
     
-    for (const key in chatMessage) {
-      if (chatMessage.hasOwnProperty(key) && chatMessage[key].gameId === gameId) { // Bukooda düzenleme olcak kafam karıştı mk gece gece
-        messages.push({userName:usersData[key].nickname,});
+    for (const message of chatMessage) {
+      if (message.gameId === gameId) {
+        messages.push({ userName: message.nickname, message: message.message });
       }
     }
     
     return messages;
-  }
-
+}
 
 io.on("connection",(socket)=>{
     
@@ -66,17 +65,23 @@ io.on("connection",(socket)=>{
             playerList:getNicknamesByGameId(data.gameId)
         });
 
+        socket.emit('chat', {
+          gameId:data.gameId,
+          messages:getChatMessageByGameId(data.gameId)
+      });
+
         console.log("connected")
         console.log(usersData);
     });
 
     socket.on("chat",data=>{
-        chatMessage[data.gameId] = { nickname: data.nickname,message:data.message };
+        chatMessage.push({ nickname: data.nickname,message:data.message,gameId:data.gameId}) ;
+        console.log(getChatMessageByGameId(data.gameId));
         socket.broadcast.emit("chat",{
             gameId:data.gameId,
             messages:getChatMessageByGameId(data.gameId)
         });
-
+       
         socket.emit('chat', {
             gameId:data.gameId,
             messages:getChatMessageByGameId(data.gameId)
