@@ -1,4 +1,7 @@
+const  game  = require("./game");
+const db = require("./database.js");
 const app = require("express");
+const { AssignRole } = require("./game");
 const PORT = 3000;
 const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer,{
@@ -9,17 +12,21 @@ const io = require("socket.io")(httpServer,{
 const usersData = {};
 const chatMessage = [];
 
-function getNicknamesByGameId(gameId) {
-    const nicknames = [];
+
+
+  function getPlayerListByGameId(gameId) {
+    const playerList = [];
     
     for (const key in usersData) {
       if (usersData.hasOwnProperty(key) && usersData[key].gameId === gameId) {
-        nicknames.push(usersData[key].nickname);
+        playerList.push({userName:usersData[key].nickname,id:key});
       }
     }
     
-    return nicknames;
+    return playerList;
   }
+
+
 
   function getChatMessageByGameId(gameId) {
     const messages = [];
@@ -37,55 +44,108 @@ io.on("connection",(socket)=>{
     
     
     socket.on('disconnect', () => {
-        if(usersData[socket.id]){
-            const gameId = usersData[socket.id].gameId;
-            const name = usersData[socket.id].gameId;
-            delete usersData[socket.id];
-        socket.broadcast.emit("leaveGame",{
-            userName:name,
-            gameId:gameId,
-            playerList:getNicknamesByGameId(gameId)
+        
+           db.GetPlayerBySocketId(socket.id).then(player=>{
+            db.DeletePlayer(socket.id).then(()=>{
+              db.GetPlayersbyGameId(player.rows[0].gameid).then(players=>{
+
+                
+                socket.broadcast.emit("leaveGame",{
+                  userName:player.rows[0].name,
+                  gameId:player.rows[0].gameid,
+                  playerList:players
+             })
+              })
+
+            })
         });
         
         console.log("disconnected");
-    }   console.log(usersData);
-      });
+    }  
+      );
 
     socket.on("joinGame",data=>{
-        usersData[socket.id] = { nickname: data.nickname,gameId:data.gameId };
-        socket.broadcast.emit("joinGame",{
-            userName:data.nickname+"",
+        db.AddPlayer(socket.id,data.nickname,data.gameId).then(()=>{
+        db.GetPlayersbyGameId(data.gameId).then(players=>{
+          db.GetChatMessagebyGameId(data.gameId).then(messages =>{
+            console.log("index");
+            console.log(messages.rows);
+            socket.broadcast.emit("joinGame",{
+              userName:data.nickname+"",
+              gameId:data.gameId,
+              playerList:players
+          });
+  
+          socket.emit('joinGame', {
+              userName:data.nickname+"",
+              gameId:data.gameId,
+              playerList:players
+          });
+  
+          socket.emit('chat', {
             gameId:data.gameId,
-            playerList:getNicknamesByGameId(data.gameId)
+            messages:messages.rows
         });
-
-        socket.emit('joinGame', {
-            userName:data.nickname+"",
-            gameId:data.gameId,
-            playerList:getNicknamesByGameId(data.gameId)
-        });
-
-        socket.emit('chat', {
-          gameId:data.gameId,
-          messages:getChatMessageByGameId(data.gameId)
-      });
-
-        console.log("connected")
-        console.log(usersData);
+        io.to(socket.id).emit('id',socket.id);
+          })
+        })
+        })
     });
 
     socket.on("chat",data=>{
-        chatMessage.push({ nickname: data.nickname,message:data.message,gameId:data.gameId}) ;
-        console.log(getChatMessageByGameId(data.gameId));
-        socket.broadcast.emit("chat",{
-            gameId:data.gameId,
-            messages:getChatMessageByGameId(data.gameId)
+      db.GetPlayerBySocketId(socket.id).then(player=>{
+        console.log(socket.id)
+        console.log(player.rows[0].name+" "+player.rows[0].gameid,+" "+data.message);
+        
+        db.AddChat(player.rows[0].name,player.rows[0].gameid,data.message).then(()=>{
+          
+          db.GetChatMessagebyGameId(player.rows[0].gameid).then(messages=>{
+            console.log(messages.rows);
+            
+            socket.broadcast.emit("chat",{
+                gameId:player.rows[0].gameid,
+                messages:messages.rows
+            });
+           
+            socket.emit('chat', {
+                gameId:player.rows[0].gameid,
+                messages:messages.rows
+            });
+  
+          },error=>{
+            console.log(error);
+          })
+
+
+        })
+      })
+      
+    
+
+    })
+
+    socket.on("startGame",data=>{
+      db.GetPlayersbyGameId(data.gameId).then(players=>{
+
+        const playerListWithRole = game.AssignRole(players,data.gameSettings);
+        console.log(playerListWithRole);
+        playerListWithRole.forEach(element => {
+          io.to(element.id).emit('role',element.role);
         });
-       
-        socket.emit('chat', {
-            gameId:data.gameId,
-            messages:getChatMessageByGameId(data.gameId)
-        });
+        
+  
+        socket.broadcast.emit("startGame",{
+          gameId:data.gameId,
+          playerList:playerListWithRole
+        })
+  
+        socket.emit("startGame",{
+          gameId:data.gameId,
+          playerList:playerListWithRole
+        })
+
+      })
+    
     })
 })
 
