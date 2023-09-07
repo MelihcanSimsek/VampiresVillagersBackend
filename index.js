@@ -156,7 +156,17 @@ io.on("connection", (socket) => {
         if(voteResponse.rows.length <= 0 )
         {
           db.AddVote(data).then(()=>{
+          db.GetAllVote(data).then(votes=>{
+            socket.broadcast.emit("vote",{
+              gameId:data.gameId,
+              voteList:votes.rows
+            });
 
+            socket.emit("vote",{
+              gameId:data.gameId,
+              voteList:votes.rows
+            });
+          })
 
           })
         }
