@@ -129,7 +129,6 @@ io.on("connection", (socket) => {
       db.AddGame(data.gameId,data.gameSettings).then(()=>{
         db.AddRole(data.gameId,game.AssignRole(players, data.gameSettings)).then(()=>{
           db.GetPlayersRoleByGameId(data.gameId).then(playerListWithRole=>{
-            console.log(playerListWithRole.rows);
             playerListWithRole.rows.forEach(element => {
               io.to(element.id).emit('role', element.role);
             });
@@ -157,6 +156,7 @@ io.on("connection", (socket) => {
         {
           db.AddVote(data).then(()=>{
           db.GetAllVote(data).then(votes=>{
+            console.log(votes.rows);
             socket.broadcast.emit("vote",{
               gameId:data.gameId,
               voteList:votes.rows

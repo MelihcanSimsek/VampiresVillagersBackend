@@ -115,8 +115,8 @@ async function GetChatMessagebyGameId(gameId) {
 
 async function AddGame(gameId, gameSettings) {
   try {
-    const insertQuery = 'INSERT INTO "Game" (Id,DayTime,NightTime,VampireNumber,PriestNumber,Day ) VALUES ($1,$2,$3,$4,$5,1)';
-    const values = [gameId, gameSettings.dayTime, gameSettings.nightTime, gameSettings.vampireNumber, gameSettings.priestNumber];
+    const insertQuery = 'INSERT INTO "Game" (Id,DayTime,NightTime,VampireNumber,PriestNumber,WitchNumber,VampireHunter,Shapeshifter,Transforming,Day ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1)';
+    const values = [gameId, gameSettings.dayTime, gameSettings.nightTime, gameSettings.vampireNumber, gameSettings.priestNumber,gameSettings.witchNumber,gameSettings.vampireHunterNumber,gameSettings.shapeshifterVampire,gameSettings.transformingVampire];
     await client.query(insertQuery, values);
 
   } catch (error) {
@@ -151,8 +151,8 @@ async function AddRole(gameId,playerListWithRole)
 {
   try {
      await  playerListWithRole.forEach(player => {
-      const insertQuery = 'INSERT INTO "GameState" (Id,Name,GameId,Role,Live) VALUES ($1,$2,$3,$4,$5)';
-      const values = [player.id, player.name, gameId, player.role,true];
+      const insertQuery = 'INSERT INTO "GameState" (Id,Name,GameId,Role,Skill,Live) VALUES ($1,$2,$3,$4,$5,$6)';
+      const values = [player.id, player.name, gameId, player.role,player.skill,true];
       client.query(insertQuery, values);
     });
    
@@ -166,7 +166,7 @@ async function AddRole(gameId,playerListWithRole)
 async function GetPlayersRoleByGameId(gameId)
 {
   try {
-    const selectQuery = 'SELECT id,name,role,live FROM "GameState" WHERE GameId = $1';
+    const selectQuery = 'SELECT id,name,role,skill,live FROM "GameState" WHERE GameId = $1';
     const values = [gameId];
     const result = await client.query(selectQuery, values);
     return result;
@@ -178,7 +178,7 @@ async function GetPlayersRoleByGameId(gameId)
 async function GetPlayerRoleBySocketId(id)
 {
   try {
-    const selectQuery = 'SELECT id,name,role,live FROM "GameState" WHERE Id = $1';
+    const selectQuery = 'SELECT id,name,role,skill,live FROM "GameState" WHERE Id = $1';
     const values = [id];
     const result = await client.query(selectQuery, values);
     return result;
