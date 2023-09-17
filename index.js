@@ -1,7 +1,6 @@
 const game = require("./game");
 const db = require("./database.js");
 const app = require("express");
-const { AssignRole } = require("./game");
 const PORT = 3000;
 const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer, {
@@ -9,36 +8,13 @@ const io = require("socket.io")(httpServer, {
   origin: ["*"]
 });
 
-const usersData = {};
-const chatMessage = [];
 
 
 
-function getPlayerListByGameId(gameId) {
-  const playerList = [];
-
-  for (const key in usersData) {
-    if (usersData.hasOwnProperty(key) && usersData[key].gameId === gameId) {
-      playerList.push({ userName: usersData[key].nickname, id: key });
-    }
-  }
-
-  return playerList;
-}
 
 
 
-function getChatMessageByGameId(gameId) {
-  const messages = [];
 
-  for (const message of chatMessage) {
-    if (message.gameId === gameId) {
-      messages.push({ userName: message.nickname, message: message.message });
-    }
-  }
-
-  return messages;
-}
 
 io.on("connection", (socket) => {
 
@@ -119,9 +95,6 @@ io.on("connection", (socket) => {
 
       })
     })
-
-
-
   })
 
   socket.on("startGame", data => {
@@ -159,12 +132,12 @@ io.on("connection", (socket) => {
             console.log(votes.rows);
             socket.broadcast.emit("vote",{
               gameId:data.gameId,
-              voteList:votes.rows
+              votes:votes.rows
             });
 
             socket.emit("vote",{
               gameId:data.gameId,
-              voteList:votes.rows
+              votes:votes.rows
             });
           })
 
@@ -177,7 +150,67 @@ io.on("connection", (socket) => {
           })
         }
       })
+    })
 
+    // Gündüz Oylaması ve Geceye Dönüş
+    socket.on("day",data=>{
+      db.GetAllVote(data).then(votes=>{
+        const victim = game.GetDayTimeHangedPlayer(votes.rows);
+        if(victim != "")
+        {
+          db.ChangePlayerLiveState(victim).then(()=>{
+            db.GetPlayersRoleByGameId(data.gameId).then(playersWithRole=>{
+              db.GetPlayerRoleBySocketId(victim).then(victimPlayer=>{
+                const isGameEnded = game.CheckGameIsEndingForDayTime(playersWithRole.rows);
+                socket.broadcast.emit("day",{
+                  gameId:data.gameId,
+                  victim:victimPlayer.rows,
+                  players:playersWithRole.rows,
+                  game:isGameEnded,
+                  dayType:!data.dayType,
+                  day:data.day
+                });
+
+                socket.emit("day",{
+                  gameId:data.gameId,
+                  victim:victimPlayer.rows,
+                  players:playersWithRole.rows,
+                  game:isGameEnded,
+                  dayType:!data.dayType,
+                  day:data.day
+                });
+
+              })
+            })
+
+          })
+        }
+        else{
+          socket.broadcast.emit("day",{
+            gameId:data.gameId,
+            victim:null,
+            players:null,
+            game:{gameover:false,winner:3},
+            dayType:!data.dayType,
+            day:data.day
+          })
+
+          socket.emit("day",{
+            gameId:data.gameId,
+            victim:null,
+            players:null,
+            game:{gameover:false,winner:3},
+            dayType:!data.dayType,
+            day:data.day
+          })
+        }
+
+      })
+
+    })
+
+    // Gece Oylaması ve Gündüze Dönüş
+    socket.on("night",data=>{
       
     })
 

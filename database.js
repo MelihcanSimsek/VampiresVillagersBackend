@@ -187,6 +187,18 @@ async function GetPlayerRoleBySocketId(id)
   }
 }
 
+async function ChangePlayerLiveState(id)
+{
+  try {
+    const updateQuery = 'UPDATE  "GameState" SET Live=$1 WHERE Id = $2'
+    const values = [false,id];
+    await client.query(updateQuery, values);
+   
+  } catch (error) {
+    console.error('Hata:', error);
+  }
+}
+
 async function DeleteRole(gameId)
 {
   try {
@@ -280,6 +292,7 @@ module.exports = {
   GetGame: GetGame,
   AddRole:AddRole,
   DeleteRole:DeleteRole,
+  ChangePlayerLiveState:ChangePlayerLiveState,
   GetPlayerRoleBySocketId:GetPlayerRoleBySocketId,
   GetPlayersRoleByGameId:GetPlayersRoleByGameId,
   AddVote:AddVote,

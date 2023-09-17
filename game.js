@@ -135,6 +135,74 @@ function AssignRole(playerList, gameSettings) {
     return playerListWithRole;
 }
 
+function GetDayTimeHangedPlayer(votes)
+{
+    const repeatTargetNumber = {};
+    let mostRepeatTarget = "";
+    let mostRepeat = 0;
+    votes.forEach(data => {
+        const {targetId} = data;
+        if(repeatTargetNumber[targetId])
+        {
+            repeatTargetNumber[targetId]++;
+        }
+        else
+        {
+            repeatTargetNumber[targetId] = 1;
+        }
+    });
+
+    for (const targetId in repeatTargetNumber) {
+        if (repeatTargetNumber[targetId] > mostRepeat) {
+          mostRepeat = repeatTargetNumber[targetId];
+          mostRepeatTarget = targetId;
+        }
+      }
+
+      return mostRepeatTarget;
+}
+
+function CheckGameIsEndingForDayTime(players)
+{
+    let vampireNumber = 0;
+    let villagerNumber = 0;
+    for (const player in players)
+    {
+        if((player.role == 2 || player.role == 6 || player.role == 7) && players.live )
+        {
+            vampireNumber++;
+        }
+
+        if(!(player.role == 2 || player.role == 6 || player.role == 7) && players.live)
+        {
+            villagerNumber++;
+        }
+    }
+
+
+/* Eğer WİNNER 1 İSE KÖYLÜLER KAZANIYOR 2 İSE VAMPİRLER 3 ise oyun devam*/ 
+    if(vampireNumber == 0)
+    {
+        return {gameover:true,winner:1};
+    }
+    else if(vampireNumber >= villagerNumber)
+    {
+        return {gameover:true,winner:2};
+    }
+    else{
+        return {gameover:false,winner:3};
+    }
+
+}
+
+function CheckGameIsEndingForNightTime()
+{
+
+}
+
 module.exports = {
     AssignRole: AssignRole,
+    GetDayTimeHangedPlayer:GetDayTimeHangedPlayer,
+    CheckGameIsEndingForDayTime:CheckGameIsEndingForDayTime,
+    CheckGameIsEndingForNightTime:CheckGameIsEndingForNightTime
 };
