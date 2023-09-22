@@ -140,59 +140,52 @@ function GetDayTimeHangedPlayer(votes)
     const repeatTargetNumber = {};
     let mostRepeatTarget = "";
     let mostRepeat = 0;
-    votes.forEach(data => {
-        const {targetId} = data;
-        if(repeatTargetNumber[targetId])
+    votes.forEach(vote => {
+        const targetid = vote.targetid;
+        if(repeatTargetNumber[targetid])
         {
-            repeatTargetNumber[targetId]++;
+            repeatTargetNumber[targetid]++;
         }
         else
         {
-            repeatTargetNumber[targetId] = 1;
+            repeatTargetNumber[targetid] = 1;
         }
     });
 
-    for (const targetId in repeatTargetNumber) {
-        if (repeatTargetNumber[targetId] > mostRepeat) {
-          mostRepeat = repeatTargetNumber[targetId];
-          mostRepeatTarget = targetId;
+    for (const targetid in repeatTargetNumber) {
+        if (repeatTargetNumber[targetid] > mostRepeat) {
+          mostRepeat = repeatTargetNumber[targetid];
+          mostRepeatTarget = targetid;
         }
       }
-
       return mostRepeatTarget;
 }
 
-function CheckGameIsEndingForDayTime(players)
-{
+
+//2 6 7 vampir rolü
+function CheckGameIsEndingForDayTime(players) {
     let vampireNumber = 0;
     let villagerNumber = 0;
-    for (const player in players)
-    {
-        if((player.role == 2 || player.role == 6 || player.role == 7) && players.live )
-        {
+
+    for (const player of players) {
+        if ((player.role === 2 || player.role === 6 || player.role === 7) && player.live) {
             vampireNumber++;
         }
 
-        if(!(player.role == 2 || player.role == 6 || player.role == 7) && players.live)
-        {
+        if ((player.role === 1 || player.role === 3 || player.role === 4 || player.role === 5) && player.live) {
             villagerNumber++;
         }
     }
 
-
-/* Eğer WİNNER 1 İSE KÖYLÜLER KAZANIYOR 2 İSE VAMPİRLER 3 ise oyun devam*/ 
-    if(vampireNumber == 0)
-    {
-        return {gameover:true,winner:1};
+    console.log("vampir number == "+vampireNumber);
+    console.log("Villager number == "+villagerNumber);
+    if (vampireNumber === 0) {
+        return { gameover: true, winner: 1 };
+    } else if (vampireNumber >= villagerNumber) {
+        return { gameover: true, winner: 2 };
+    } else {
+        return { gameover: false, winner: 3 };
     }
-    else if(vampireNumber >= villagerNumber)
-    {
-        return {gameover:true,winner:2};
-    }
-    else{
-        return {gameover:false,winner:3};
-    }
-
 }
 
 function CheckGameIsEndingForNightTime()

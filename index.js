@@ -35,8 +35,6 @@ io.on("connection", (socket) => {
 
       })
     });
-
-    console.log("disconnected");
   }
   );
 
@@ -156,15 +154,16 @@ io.on("connection", (socket) => {
     socket.on("day",data=>{
       db.GetAllVote(data).then(votes=>{
         const victim = game.GetDayTimeHangedPlayer(votes.rows);
-        if(victim != "")
+        if(victim != " ")
         {
           db.ChangePlayerLiveState(victim).then(()=>{
             db.GetPlayersRoleByGameId(data.gameId).then(playersWithRole=>{
               db.GetPlayerRoleBySocketId(victim).then(victimPlayer=>{
+                console.log(victimPlayer.rows[0]);
                 const isGameEnded = game.CheckGameIsEndingForDayTime(playersWithRole.rows);
                 socket.broadcast.emit("day",{
                   gameId:data.gameId,
-                  victim:victimPlayer.rows,
+                  victim:victimPlayer.rows[0],
                   players:playersWithRole.rows,
                   game:isGameEnded,
                   dayType:!data.dayType,
@@ -173,7 +172,7 @@ io.on("connection", (socket) => {
 
                 socket.emit("day",{
                   gameId:data.gameId,
-                  victim:victimPlayer.rows,
+                  victim:victimPlayer.rows[0],
                   players:playersWithRole.rows,
                   game:isGameEnded,
                   dayType:!data.dayType,

@@ -21,7 +21,6 @@ async function AddPlayer(id, name, gameId) {
 
     await client.query(insertQuery, values);
 
-    console.log('Oyuncu eklendi');
   } catch (error) {
     console.error('Hata:', error);
   }
@@ -34,8 +33,6 @@ async function DeletePlayer(id) {
     const values = [id];
 
     await client.query(deleteQuery, values);
-
-    console.log('Oyuncu silindi');
   } catch (error) {
     console.error('Hata:', error);
   }
