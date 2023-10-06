@@ -14,11 +14,12 @@ function GetUserClass(status)
         if(status == 1)
         {
             let role = Math.random() < 0.5 ? 6 : 7;
-            return {role:role,skill:1};
+            return role === 7 ? {role:role,skill:1} : {role:role,skill:3};
+            
         }
         else if(status == 2)
         {
-            return {role:6,skill:1};
+            return {role:6,skill:3};
         }
         else{
             return {role:7,skill:1};
@@ -177,8 +178,6 @@ function CheckGameIsEndingForDayTime(players) {
         }
     }
 
-    console.log("vampir number == "+vampireNumber);
-    console.log("Villager number == "+villagerNumber);
     if (vampireNumber === 0) {
         return { gameover: true, winner: 1 };
     } else if (vampireNumber >= villagerNumber) {

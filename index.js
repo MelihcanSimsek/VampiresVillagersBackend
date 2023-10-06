@@ -42,8 +42,6 @@ io.on("connection", (socket) => {
     db.AddPlayer(socket.id, data.nickname, data.gameId).then(() => {
       db.GetPlayersbyGameId(data.gameId).then(players => {
         db.GetChatMessagebyGameId(data.gameId).then(messages => {
-          console.log("index");
-          console.log(messages.rows);
           socket.broadcast.emit("joinGame", {
             userName: data.nickname + "",
             gameId: data.gameId,
@@ -68,13 +66,10 @@ io.on("connection", (socket) => {
 
   socket.on("chat", data => {
     db.GetPlayerBySocketId(socket.id).then(player => {
-      console.log(socket.id)
-      console.log(player.rows[0].name + " " + player.rows[0].gameid, +" " + data.message);
 
       db.AddChat(player.rows[0].name, player.rows[0].gameid, data.message).then(() => {
 
         db.GetChatMessagebyGameId(player.rows[0].gameid).then(messages => {
-          console.log(messages.rows);
 
           socket.broadcast.emit("chat", {
             gameId: player.rows[0].gameid,
@@ -127,7 +122,6 @@ io.on("connection", (socket) => {
         {
           db.AddVote(data).then(()=>{
           db.GetAllVote(data).then(votes=>{
-            console.log(votes.rows);
             socket.broadcast.emit("vote",{
               gameId:data.gameId,
               votes:votes.rows
@@ -159,7 +153,6 @@ io.on("connection", (socket) => {
           db.ChangePlayerLiveState(victim).then(()=>{
             db.GetPlayersRoleByGameId(data.gameId).then(playersWithRole=>{
               db.GetPlayerRoleBySocketId(victim).then(victimPlayer=>{
-                console.log(victimPlayer.rows[0]);
                 const isGameEnded = game.CheckGameIsEndingForDayTime(playersWithRole.rows);
                 socket.broadcast.emit("day",{
                   gameId:data.gameId,
