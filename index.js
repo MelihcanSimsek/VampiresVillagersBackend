@@ -203,7 +203,9 @@ io.on("connection", (socket) => {
 
     // Gece Oylaması ve Gündüze Dönüş
     socket.on("night",data=>{
-      
+      db.GetAllVote(data).then(votes=>{
+        
+      })
     })
 
   })
